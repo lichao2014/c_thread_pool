@@ -6,7 +6,7 @@ extern "C" {
 }
 
 
-class ThreadPoolC : public ThreadPool {
+class ThreadPoolC : public test::ThreadPool {
 public:
     ThreadPoolC(int work_count, int queue_size)
         :pool_(thread_pool_create(work_count, queue_size))
@@ -18,10 +18,10 @@ public:
         pool_ = nullptr;
     }
 
-    bool submit(ThreadCallback *cb) override
+    bool submit(test::ThreadCallback *cb) override
     {
         return 0 == thread_pool_submit(pool_, [](void *arg) {
-            ThreadCallback *cb = static_cast<ThreadCallback *>(arg);
+            test::ThreadCallback *cb = static_cast<test::ThreadCallback *>(arg);
             cb->onThread();
         }, cb);
     }
@@ -34,15 +34,13 @@ private:
 int 
 main()
 {
-    std::shared_ptr<ThreadPool> tp(new ThreadPoolC(16, 2048));
-
-    ThreadPoolTest test(tp, 1000000, std::cout);
+    std::unique_ptr<test::ThreadPool> tp(new ThreadPoolC(16, 1024));
+    test::ThreadPoolTest test(std::move(tp), 1000000, std::cout);
 
     test.start(64);
 
     std::cin.get();
 
-    tp.reset();
 
     return 0;
 }

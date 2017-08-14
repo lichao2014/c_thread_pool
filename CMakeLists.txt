@@ -12,16 +12,22 @@ endif()
 
 add_library(c_thread_pool ${SRC} ${INC})
 
-include_directories(D:/third_party/boost_1_64_0 src)
+include_directories( src)
 
-link_libraries(c_thread_pool)
 if (UNIX)
 	link_libraries(pthread)
 endif()
 
 link_directories(D:/third_party/boost_1_64_0/vc14.1/lib)
 
-add_executable(test samples/test.cpp)
-add_executable(ppl_test samples/ppl_test.cpp)
-add_executable(boost_test samples/boost_test.cpp)
+add_executable(test tests/test.cpp)
+target_include_directories(test PRIVATE src)
+target_link_libraries(test PRIVATE c_thread_pool)
 
+add_executable(ppl_test tests/ppl_test.cpp)
+
+add_executable(boost_test tests/boost_test.cpp)
+target_include_directories(boost_test PRIVATE D:/third_party/boost_1_64_0)
+
+add_executable(cpp_test tests/cpp_test.cpp)
+target_include_directories(cpp_test PRIVATE cpp)

@@ -5,9 +5,9 @@
 
 
 
-class ThreadPoolCBoost : public ThreadPool {
+class ThreadPoolBoost : public test::ThreadPool {
 public:
-    bool submit(ThreadCallback *cb) override
+    bool submit(test::ThreadCallback *cb) override
     {
         pool_.submit([cb] {
             cb->onThread();
@@ -24,15 +24,13 @@ private:
 int
 main()
 {
-    std::shared_ptr<ThreadPool> tp(new ThreadPoolCBoost);
+    std::unique_ptr<test::ThreadPool> tp(new ThreadPoolBoost);
 
-    ThreadPoolTest test(tp, 1000000, std::clog);
+    test::ThreadPoolTest test(std::move(tp), 1000000, std::clog);
 
     test.start(64);
 
     std::cin.get();
-
-    tp.reset();
 
     return 0;
 }

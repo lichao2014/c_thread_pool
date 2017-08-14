@@ -4,9 +4,9 @@
 #include "test.h"
 
 
-class ThreadPoolPPL: public ThreadPool {
+class ThreadPoolPPL: public test::ThreadPool {
 public:
-    bool submit(ThreadCallback *cb) override
+    bool submit(test::ThreadCallback *cb) override
     {
         tg_.run([cb] {
             cb->onThread();
@@ -23,7 +23,8 @@ private:
 int
 main()
 {
-    ThreadPoolTest test(std::shared_ptr<ThreadPool>(new ThreadPoolPPL), 1000000, std::clog);
+    std::unique_ptr<test::ThreadPool> tp(new ThreadPoolPPL);
+    test::ThreadPoolTest test(std::move(tp), 1000000, std::clog);
 
     test.start(64);
 
