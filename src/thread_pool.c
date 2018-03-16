@@ -4,12 +4,10 @@
 #include "thread.h"
 #include "mpmc_bound_queue.h"
 
-
 struct thread_ctx_t {
     void(*fn)(void *);
     void *arg;
 };
-
 
 struct thread_work_t {
     struct mpmc_bound_queue_t *q;
@@ -19,17 +17,14 @@ struct thread_work_t {
     int id;
 };
 
-
 struct thread_pool_t {
     atomic_t round;
     int work_count;
     struct thread_work_t works[1];
 };
 
-
 static void
-thread_ctx_copy(void *src, void *dst, int len)
-{
+thread_ctx_copy(void *src, void *dst, int len) {
     struct thread_ctx_t *a = dst;
     struct thread_ctx_t *b =src;
 
@@ -37,18 +32,14 @@ thread_ctx_copy(void *src, void *dst, int len)
     a->arg = b->arg;
 }
 
-
 static int *
-thread_work_get_id()
-{
+thread_work_get_id() {
     static THREAD_LOCAL int tid = -1;
     return &tid;
 }
 
-
 static void * 
-thread_work_fn(void *arg)
-{
+thread_work_fn(void *arg) {
     struct thread_work_t *w = arg;
 
     *thread_work_get_id() = w->id;
@@ -71,10 +62,8 @@ thread_work_fn(void *arg)
     return NULL;
 }
 
-
 static int 
-thread_work_init(struct thread_work_t *w, int id, int queue_size)
-{
+thread_work_init(struct thread_work_t *w, int id, int queue_size) {
     w->q = mpmc_bound_queue_create(queue_size, &thread_ctx_copy);
     if (!w->q) {
         return -1;
@@ -87,35 +76,27 @@ thread_work_init(struct thread_work_t *w, int id, int queue_size)
     return 0;
 }
 
-
 static int 
-thread_work_start(struct thread_work_t *w, struct thread_work_t *steal)
-{
+thread_work_start(struct thread_work_t *w, struct thread_work_t *steal) {
     w->stoped = 0;
     w->steal = steal;
 
     return pthread_create(&w->th, NULL, &thread_work_fn, w);
 }
 
-
 static int 
-thread_work_stop(struct thread_work_t *w)
-{
+thread_work_stop(struct thread_work_t *w) {
     atomic_add_and_fetch(&w->stoped, 1);
     return pthread_join(w->th, NULL);
 }
 
-
 static void 
-thread_work_term(struct thread_work_t *w)
-{
+thread_work_term(struct thread_work_t *w) {
     mpmc_bound_queue_destroy(w->q);
 }
 
-
 int 
-thread_work_submit(struct thread_work_t *w, void(*fn)(void *), void *arg)
-{
+thread_work_submit(struct thread_work_t *w, void(*fn)(void *), void *arg) {
     if (atomic_add_and_fetch(&w->stoped, 0)) {
         return -1;
     }
@@ -127,11 +108,11 @@ thread_work_submit(struct thread_work_t *w, void(*fn)(void *), void *arg)
     return mpmc_bound_queue_push(w->q, &ctx, sizeof ctx);
 }
 
-
 struct thread_pool_t *
-thread_pool_create(int work_count, int queue_size)
-{
-    struct thread_pool_t *tp = malloc(sizeof(struct thread_pool_t) + sizeof(struct thread_work_t) * (work_count - 1));
+thread_pool_create(int work_count, int queue_size) {
+    struct thread_pool_t *tp = malloc(
+        sizeof(struct thread_pool_t) 
+        + sizeof(struct thread_work_t) * (work_count - 1));
     if (!tp) {
         return tp;
     }
@@ -151,10 +132,8 @@ thread_pool_create(int work_count, int queue_size)
     return tp;
 }
 
-
 int 
-thread_pool_destroy(struct thread_pool_t *tp)
-{
+thread_pool_destroy(struct thread_pool_t *tp) {
     int i;
     for (i = 0; i < tp->work_count; ++i) {
         thread_work_stop(tp->works + i);
@@ -169,10 +148,8 @@ thread_pool_destroy(struct thread_pool_t *tp)
     return 0;
 }
 
-
 static struct thread_work_t *
-thread_pool_get_work(struct thread_pool_t *tp)
-{
+thread_pool_get_work(struct thread_pool_t *tp) {
     int id = *thread_work_get_id();
 
     if (-1 == id) {
@@ -182,10 +159,7 @@ thread_pool_get_work(struct thread_pool_t *tp)
     return tp->works + id;
 }
 
-
 int 
-thread_pool_submit(struct thread_pool_t *tp, void(*fn)(void *), void *arg)
-{
+thread_pool_submit(struct thread_pool_t *tp, void(*fn)(void *), void *arg) {
     return thread_work_submit(thread_pool_get_work(tp), fn, arg);
 }
-

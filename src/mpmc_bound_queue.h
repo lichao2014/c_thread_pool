@@ -1,7 +1,6 @@
 #ifndef _MPMC_BOUND_QUEUE_H_INCLUDED
 #define _MPMC_BOUND_QUEUE_H_INCLUDED
 
-
 #include "atomic.h"
 
 #define CACHE_LINE_SIZE 64
@@ -45,13 +44,10 @@ struct mpmc_bound_queue_t {
     union mpmc_bound_queue_item_t items[1];
 };
 
-struct mpmc_bound_queue_t *mpmc_bound_queue_create(int size, mpmc_bound_queue_item_copy_fn_t fn);
-
+struct mpmc_bound_queue_t *mpmc_bound_queue_create(
+    int size, mpmc_bound_queue_item_copy_fn_t fn);
 void mpmc_bound_queue_destroy(struct mpmc_bound_queue_t *q);
-
 int mpmc_bound_queue_push(struct mpmc_bound_queue_t *q, void *data, int size);
-
 int mpmc_bound_queue_pop(struct mpmc_bound_queue_t *q, void *data, int size);
-
 
 #endif //_MPMC_BOUND_QUEUE_H_INCLUDED
